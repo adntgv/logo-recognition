@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logo Recognition</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f13;color:#e0e0e6;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem}
+  h1{font-size:1.8rem;font-weight:600;margin-bottom:.3rem;background:linear-gradient(135deg,#6c5ce7,#a29bfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .subtitle{color:#888;font-size:.9rem;margin-bottom:2rem}
+  .card{background:#1a1a24;border-radius:16px;padding:2rem;width:100%;max-width:560px;border:1px solid #2a2a3a}
+  .dropzone{border:2px dashed #3a3a5a;border-radius:12px;padding:3rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s}
+  .dropzone:hover,.dropzone.dragover{border-color:#6c5ce7;background:#1e1e2e}
+  .dropzone-icon{font-size:2.5rem;margin-bottom:.8rem}
+  .dropzone p{color:#888;font-size:.9rem}
+  .dropzone p span{color:#a29bfe;text-decoration:underline;cursor:pointer}
+  #fileInput{display:none}
+  .preview-wrap{margin-top:1.2rem;text-align:center;display:none}
+  .preview-wrap img{max-width:100%;max-height:240px;border-radius:8px;border:1px solid #2a2a3a}
+  .preview-name{color:#888;font-size:.8rem;margin-top:.5rem}
+  .btn{display:block;width:100%;padding:.9rem;margin-top:1.2rem;background:linear-gradient(135deg,#6c5ce7,#5a4bd1);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity .2s}
+  .btn:hover{opacity:.9}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .spinner{display:none;margin:1.5rem auto;width:36px;height:36px;border:3px solid #2a2a3a;border-top-color:#6c5ce7;border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .results{display:none;margin-top:1.5rem}
+  .results h2{font-size:1.1rem;margin-bottom:.8rem;color:#a29bfe}
+  .result-label{font-size:1.4rem;font-weight:700;text-align:center;padding:.8rem;background:#1e1e2e;border-radius:10px;margin-bottom:1rem}
+  .result-label.unknown{color:#888}
+  .match{display:flex;align-items:center;gap:.8rem;padding:.6rem 0;border-bottom:1px solid #1e1e2e}
+  .match:last-child{border:none}
+  .match-rank{color:#555;font-size:.8rem;width:1.5rem;text-align:center;flex-shrink:0}
+  .match-info{flex:1;min-width:0}
+  .match-name{font-weight:500;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .match-bar-wrap{height:6px;background:#1e1e2e;border-radius:3px;margin-top:4px;overflow:hidden}
+  .match-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,#6c5ce7,#a29bfe);transition:width .4s ease}
+  .match-score{font-size:.85rem;font-weight:600;color:#a29bfe;flex-shrink:0;width:3.5rem;text-align:right}
+  .timing{margin-top:1.2rem;padding:.8rem;background:#1e1e2e;border-radius:8px;font-size:.8rem;color:#888}
+  .timing div{display:flex;justify-content:space-between;padding:2px 0}
+  .timing .total{color:#a29bfe;font-weight:600;border-top:1px solid #2a2a3a;margin-top:4px;padding-top:4px}
+  .ocr-tokens{margin-top:.6rem;font-size:.75rem;color:#555}
+</style>
+</head>
+<body>
+<h1>Logo Recognition</h1>
+<p class="subtitle">Upload a logo image to identify the company</p>
+<div class="card">
+  <div class="dropzone" id="dropzone">
+    <div class="dropzone-icon">📷</div>
+    <p>Drag & drop an image here or <span id="browseLink">browse</span></p>
+  </div>
+  <input type="file" id="fileInput" accept="image/*">
+  <div class="preview-wrap" id="previewWrap">
+    <img id="previewImg">
+    <div class="preview-name" id="previewName"></div>
+  </div>
+  <button class="btn" id="recognizeBtn" disabled>Recognize</button>
+  <div class="spinner" id="spinner"></div>
+  <div class="results" id="results">
+    <div class="result-label" id="resultLabel"></div>
+    <h2>Top Matches</h2>
+    <div id="matchList"></div>
+    <div class="timing" id="timing"></div>
+    <div class="ocr-tokens" id="ocrTokens"></div>
+  </div>
+</div>
+<script>
+const dropzone=document.getElementById('dropzone'),fileInput=document.getElementById('fileInput'),previewWrap=document.getElementById('previewWrap'),previewImg=document.getElementById('previewImg'),previewName=document.getElementById('previewName'),btn=document.getElementById('recognizeBtn'),spinner=document.getElementById('spinner'),results=document.getElementById('results');
+let selectedFile=null;
+
+dropzone.addEventListener('click',()=>fileInput.click());
+dropzone.addEventListener('dragover',e=>{e.preventDefault();dropzone.classList.add('dragover')});
+dropzone.addEventListener('dragleave',()=>dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop',e=>{e.preventDefault();dropzone.classList.remove('dragover');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
+fileInput.addEventListener('change',()=>{if(fileInput.files[0])handleFile(fileInput.files[0])});
+
+function handleFile(f){
+  selectedFile=f;
+  const url=URL.createObjectURL(f);
+  previewImg.src=url;
+  previewName.textContent=f.name+' ('+Math.round(f.size/1024)+' KB)';
+  previewWrap.style.display='block';
+  btn.disabled=false;
+  results.style.display='none';
+}
+
+btn.addEventListener('click',async()=>{
+  if(!selectedFile)return;
+  btn.disabled=true;
+  spinner.style.display='block';
+  results.style.display='none';
+  const fd=new FormData();
+  fd.append('file',selectedFile);
+  try{
+    const r=await fetch('/match',{method:'POST',body:fd});
+    const d=await r.json();
+    renderResults(d);
+  }catch(e){
+    alert('Error: '+e.message);
+  }finally{
+    btn.disabled=false;
+    spinner.style.display='none';
+  }
+});
+
+function renderResults(d){
+  const label=document.getElementById('resultLabel');
+  label.textContent=d.label;
+  label.className='result-label'+(d.label==='unknown'?' unknown':'');
+
+  const list=document.getElementById('matchList');
+  const maxScore=d.candidates.length?d.candidates[0].final_score:1;
+  list.innerHTML=d.candidates.slice(0,5).map((c,i)=>{
+    const pct=Math.round(c.final_score*100);
+    const barW=Math.round((c.final_score/Math.max(maxScore,0.01))*100);
+    return `<div class="match"><div class="match-rank">#${i+1}</div><div class="match-info"><div class="match-name">${esc(c.company_name||c.company_id)}</div><div class="match-bar-wrap"><div class="match-bar" style="width:${barW}%"></div></div></div><div class="match-score">${pct}%</div></div>`;
+  }).join('');
+
+  const t=d.timing_ms;
+  document.getElementById('timing').innerHTML=
+    `<div><span>Preprocess</span><span>${t.preprocess} ms</span></div>`+
+    `<div><span>Embedding</span><span>${t.embed} ms</span></div>`+
+    `<div><span>FAISS Search</span><span>${t.search} ms</span></div>`+
+    `<div><span>OCR</span><span>${t.ocr} ms</span></div>`+
+    `<div class="total"><span>Total</span><span>${t.total} ms</span></div>`;
+
+  if(d.ocr_tokens&&d.ocr_tokens.length)
+    document.getElementById('ocrTokens').textContent='OCR tokens: '+d.ocr_tokens.join(', ');
+  else document.getElementById('ocrTokens').textContent='';
+
+  results.style.display='block';
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+__pycache__
+*.pyc
+.git
+data/logos
+fetch_companies.py
+build_index.py
+test_match.py
+README.md
