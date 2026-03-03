@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logo Labeling Admin</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+.login-wrap { display: flex; justify-content: center; align-items: center; height: 100vh; }
+.login-box { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 320px; }
+.login-box h2 { margin-bottom: 1rem; }
+.login-box input { width: 100%; padding: 0.5rem; margin-bottom: 0.75rem; border: 1px solid #ddd; border-radius: 4px; }
+.login-box button { width: 100%; padding: 0.5rem; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.login-box .error { color: red; font-size: 0.85rem; margin-top: 0.5rem; }
+.topbar { background: #1e293b; color: #fff; padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; flex-wrap: wrap; gap: 0.5rem; }
+.topbar .stats span { margin-right: 1rem; font-size: 0.85rem; }
+.topbar .actions { display: flex; gap: 0.5rem; }
+.topbar button { border: none; color: #fff; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+.btn-danger { background: #ef4444; }
+.btn-blue { background: #2563eb; }
+.btn-green { background: #16a34a; }
+.btn-amber { background: #d97706; }
+.tabs { display: flex; gap: 0.5rem; padding: 1rem 1.5rem; background: #fff; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
+.tabs button { padding: 0.4rem 1rem; border: 1px solid #d1d5db; background: #fff; border-radius: 4px; cursor: pointer; }
+.tabs button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 1rem; padding: 1rem 1.5rem; }
+.card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; overflow: hidden; }
+.card img { width: 160px; height: 160px; object-fit: contain; background: #f9fafb; cursor: pointer; flex-shrink: 0; }
+.card .info { padding: 0.75rem; flex: 1; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8rem; overflow: hidden; }
+.card .pred-btn { display: inline-block; padding: 0.25rem 0.5rem; margin: 0.15rem; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; background: #fff; font-size: 0.75rem; }
+.card .pred-btn:hover { background: #dbeafe; border-color: #2563eb; }
+.card .pred-btn.top { border-color: #2563eb; background: #eff6ff; }
+.card .labeled { color: #16a34a; font-weight: 600; }
+.card .action-row { display: flex; gap: 0.3rem; margin-top: 0.25rem; flex-wrap: wrap; }
+.card .action-row input { flex: 1; min-width: 100px; padding: 0.2rem 0.4rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.75rem; }
+.unk-btn { padding: 0.25rem 0.5rem; border: 1px solid #f59e0b; border-radius: 4px; cursor: pointer; background: #fffbeb; font-size: 0.75rem; white-space: nowrap; }
+.unk-btn:hover { background: #fef3c7; }
+.nothd-btn { padding: 0.25rem 0.5rem; border: 1px solid #ef4444; border-radius: 4px; cursor: pointer; background: #fef2f2; font-size: 0.75rem; white-space: nowrap; }
+.nothd-btn:hover { background: #fee2e2; }
+.search-results { position: absolute; background: #fff; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 5; font-size: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.search-results div { padding: 0.3rem 0.5rem; cursor: pointer; }
+.search-results div:hover { background: #dbeafe; }
+.pagination { display: flex; justify-content: center; gap: 0.5rem; padding: 1rem; }
+.pagination button { padding: 0.4rem 0.8rem; border: 1px solid #d1d5db; background: #fff; border-radius: 4px; cursor: pointer; }
+.pagination button.active { background: #2563eb; color: #fff; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 50; justify-content: center; align-items: center; }
+.modal-overlay.show { display: flex; }
+.modal-overlay img { max-width: 90%; max-height: 90%; border-radius: 8px; }
+.panel { background: #fff; margin: 1rem 1.5rem; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.panel h3 { margin-bottom: 0.75rem; color: #1e293b; }
+.panel table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.panel th, .panel td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #e5e7eb; }
+.panel th { color: #6b7280; font-weight: 500; }
+.nothd-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 50; justify-content: center; align-items: center; }
+.nothd-modal.show { display: flex; }
+.nothd-box { background: #fff; padding: 1.5rem; border-radius: 8px; width: 360px; }
+.nothd-box h3 { margin-bottom: 1rem; }
+.nothd-box input { width: 100%; padding: 0.5rem; margin-bottom: 0.75rem; border: 1px solid #ddd; border-radius: 4px; }
+.nothd-box .btns { display: flex; gap: 0.5rem; }
+.nothd-box .btns button { flex: 1; padding: 0.5rem; border: none; border-radius: 4px; cursor: pointer; color: #fff; }
+.toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1e293b; color: #fff; padding: 0.75rem 1.25rem; border-radius: 8px; font-size: 0.85rem; z-index: 100; opacity: 0; transition: opacity 0.3s; }
+.toast.show { opacity: 1; }
+#app { display: none; }
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="login-wrap">
+  <div class="login-box">
+    <h2>🔐 Admin Login</h2>
+    <input id="l-user" placeholder="Username" value="admin">
+    <input id="l-pass" type="password" placeholder="Password">
+    <button onclick="doLogin()">Login</button>
+    <div id="l-error" class="error"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="stats" id="stats-bar"></div>
+    <div class="actions">
+      <button class="btn-blue" onclick="doSync()">🔄 Sync Companies</button>
+      <button class="btn-green" onclick="doRebuild()">🧠 Rebuild Index</button>
+      <button class="btn-amber" onclick="toggleUnverified()">📋 Unverified</button>
+      <button class="btn-danger" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="panel" id="unverified-panel" style="display:none">
+    <h3>📋 Top Unverified Companies (Not in HalalDamu)</h3>
+    <table><thead><tr><th>Name</th><th>Requests</th><th>First Seen</th><th>Last Seen</th><th>Added By</th></tr></thead><tbody id="unverified-body"></tbody></table>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<div class="modal-overlay" id="modal" onclick="this.classList.remove('show')">
+  <img id="modal-img" src="">
+</div>
+
+<div class="nothd-modal" id="nothd-modal">
+  <div class="nothd-box">
+    <h3>🏢 Not in HalalDamu</h3>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:0.75rem">Enter the company name you see on this logo:</p>
+    <input id="nothd-name" placeholder="Company name...">
+    <div class="btns">
+      <button style="background:#ef4444" onclick="closeNotHD()">Cancel</button>
+      <button style="background:#2563eb" onclick="submitNotHD()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let token = localStorage.getItem('admin_token') || '';
+let currentStatus = 'unlabeled';
+let currentPage = 1;
+const LIMIT = 20;
+const STATUSES = ['all', 'unlabeled', 'confirmed', 'corrected', 'unknown', 'not_halaldamu'];
+
+let nothdUploadId = null;
+
+if (token) checkAuth();
+
+function showToast(msg, ms=2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+async function api(path, opts = {}) {
+  const h = {'Authorization': 'Bearer ' + token, ...opts.headers};
+  const r = await fetch(path, {...opts, headers: h});
+  if (r.status === 401) { logout(); throw new Error('unauthorized'); }
+  return r.json();
+}
+
+async function checkAuth() {
+  try { await api('/api/admin/stats'); showApp(); }
+  catch { token = ''; localStorage.removeItem('admin_token'); }
+}
+
+async function doLogin() {
+  const u = document.getElementById('l-user').value;
+  const p = document.getElementById('l-pass').value;
+  try {
+    const r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u,password:p})});
+    if (!r.ok) { document.getElementById('l-error').textContent = 'Invalid credentials'; return; }
+    const d = await r.json();
+    token = d.token;
+    localStorage.setItem('admin_token', token);
+    showApp();
+  } catch(e) { document.getElementById('l-error').textContent = e.message; }
+}
+
+function logout() {
+  token = '';
+  localStorage.removeItem('admin_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  renderTabs();
+  loadStats();
+  loadUploads();
+}
+
+function renderTabs() {
+  const el = document.getElementById('tabs');
+  const labels = {all:'All', unlabeled:'Unlabeled', confirmed:'Confirmed', corrected:'Corrected', unknown:'Unknown', not_halaldamu:'Not HD'};
+  el.innerHTML = STATUSES.map(s =>
+    `<button class="${s===currentStatus?'active':''}" onclick="currentStatus='${s}';currentPage=1;renderTabs();loadUploads()">${labels[s]||s}</button>`
+  ).join('');
+}
+
+async function loadStats() {
+  const s = await api('/api/admin/stats');
+  document.getElementById('stats-bar').innerHTML =
+    `<span>📊 Total: ${s.total}</span><span>🏷️ Unlabeled: ${s.unlabeled}</span><span>✅ Confirmed: ${s.confirmed}</span><span>✏️ Corrected: ${s.corrected}</span><span>❓ Unknown: ${s.unknown}</span><span>🎯 Accuracy: ${s.accuracy}%</span>`;
+}
+
+async function loadUploads() {
+  const st = currentStatus === 'all' ? '' : currentStatus;
+  const d = await api(`/api/admin/uploads?status=${st}&page=${currentPage}&limit=${LIMIT}`);
+  renderGrid(d.items);
+  renderPagination(d.total);
+}
+
+function renderGrid(items) {
+  const el = document.getElementById('grid');
+  if (!items.length) { el.innerHTML = '<p style="padding:2rem;text-align:center;color:#888">No uploads found</p>'; return; }
+  el.innerHTML = items.map(item => {
+    const preds = (typeof item.predictions === 'string' ? JSON.parse(item.predictions) : item.predictions || []).slice(0, 5);
+    const predBtns = preds.map((p, i) =>
+      `<button class="pred-btn ${i===0?'top':''}" onclick="labelAs(${item.id},'${p.company_id}','${i===0?'confirmed':'corrected'}')">${esc(p.company_name)} (${(p.final_score*100).toFixed(0)}%)</button>`
+    ).join('');
+    const labelInfo = item.label_status !== 'unlabeled'
+      ? `<div class="labeled">✅ ${item.label_status}: ${item.label_company_id || 'unknown'}</div>` : '';
+    return `<div class="card">
+      <img src="/api/uploads/${item.id}/image" onclick="showModal(this.src)" loading="lazy">
+      <div class="info">
+        <div style="font-size:0.7rem;color:#888">#${item.id} · ${esc(item.original_name || '')} · ${new Date(item.uploaded_at).toLocaleString()}</div>
+        ${labelInfo}
+        <div>${predBtns}</div>
+        <div class="action-row" style="position:relative">
+          <input placeholder="Search company..." oninput="searchCompany(this,${item.id})">
+          <button class="unk-btn" onclick="labelAs(${item.id},null,'unknown')">❓</button>
+          <button class="nothd-btn" onclick="openNotHD(${item.id})">🚫 Not HD</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPagination(total) {
+  const pages = Math.ceil(total / LIMIT);
+  if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  let html = '';
+  const start = Math.max(1, currentPage - 5);
+  const end = Math.min(pages, start + 10);
+  if (start > 1) html += `<button onclick="currentPage=1;loadUploads()">1</button><span>...</span>`;
+  for (let i = start; i <= end; i++) {
+    html += `<button class="${i===currentPage?'active':''}" onclick="currentPage=${i};loadUploads()">${i}</button>`;
+  }
+  if (end < pages) html += `<span>...</span><button onclick="currentPage=${pages};loadUploads()">${pages}</button>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+async function labelAs(id, companyId, status) {
+  await api(`/api/admin/uploads/${id}`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({label_company_id: companyId, label_status: status})
+  });
+  showToast('✅ Labeled');
+  loadStats();
+  loadUploads();
+}
+
+let searchTimeout;
+function searchCompany(input, uploadId) {
+  clearTimeout(searchTimeout);
+  const q = input.value.trim();
+  const existing = input.parentElement.querySelector('.search-results');
+  if (existing) existing.remove();
+  if (q.length < 2) return;
+  searchTimeout = setTimeout(async () => {
+    const results = await api(`/api/admin/companies?q=${encodeURIComponent(q)}`);
+    if (!results.length) return;
+    const div = document.createElement('div');
+    div.className = 'search-results';
+    div.style.top = (input.offsetTop + input.offsetHeight) + 'px';
+    div.style.left = input.offsetLeft + 'px';
+    div.style.width = input.offsetWidth + 'px';
+    div.innerHTML = results.map(r =>
+      `<div onclick="labelAs(${uploadId},'${r.company_id}','corrected');this.parentElement.remove()">${esc(r.company_name)}</div>`
+    ).join('');
+    input.parentElement.appendChild(div);
+  }, 300);
+}
+
+function openNotHD(uploadId) {
+  nothdUploadId = uploadId;
+  document.getElementById('nothd-name').value = '';
+  document.getElementById('nothd-modal').classList.add('show');
+  document.getElementById('nothd-name').focus();
+}
+function closeNotHD() {
+  document.getElementById('nothd-modal').classList.remove('show');
+  nothdUploadId = null;
+}
+async function submitNotHD() {
+  const name = document.getElementById('nothd-name').value.trim();
+  if (!name) return;
+  // Add to unverified companies
+  await api('/api/admin/unverified', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name})
+  });
+  // Label the upload
+  await api(`/api/admin/uploads/${nothdUploadId}`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({label_company_id: 'NOT_HD:' + name, label_status: 'not_halaldamu'})
+  });
+  closeNotHD();
+  showToast('🚫 Marked as Not in HalalDamu');
+  loadStats();
+  loadUploads();
+}
+
+async function toggleUnverified() {
+  const panel = document.getElementById('unverified-panel');
+  if (panel.style.display === 'none') {
+    const data = await api('/api/admin/unverified');
+    const tbody = document.getElementById('unverified-body');
+    tbody.innerHTML = data.length ? data.map(r =>
+      `<tr><td><strong>${esc(r.name)}</strong></td><td>${r.frequency}</td><td>${new Date(r.first_seen).toLocaleDateString()}</td><td>${new Date(r.last_seen).toLocaleDateString()}</td><td>${esc(r.added_by||'')}</td></tr>`
+    ).join('') : '<tr><td colspan="5" style="text-align:center;color:#888">No unverified companies yet</td></tr>';
+    panel.style.display = 'block';
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+async function doSync() {
+  if (!confirm('Sync companies from HalalDamu API? This may take a few minutes.')) return;
+  showToast('🔄 Syncing...', 10000);
+  try {
+    const r = await api('/api/sync', {method: 'POST'});
+    showToast(`✅ Synced: ${r.total} companies, ${r.new_logos} new logos, ${r.reloaded_vectors} vectors`, 5000);
+    loadStats();
+  } catch(e) { showToast('❌ Sync failed: ' + e.message, 5000); }
+}
+
+async function doRebuild() {
+  if (!confirm('Rebuild FAISS index with labeled uploads? This may take a minute.')) return;
+  showToast('🧠 Rebuilding...', 10000);
+  try {
+    const r = await api('/api/admin/rebuild-index', {method: 'POST'});
+    showToast(`✅ Index rebuilt: ${r.vectors} vectors`, 3000);
+  } catch(e) { showToast('❌ Rebuild failed: ' + e.message, 5000); }
+}
+
+function showModal(src) {
+  document.getElementById('modal-img').src = src;
+  document.getElementById('modal').classList.add('show');
+}
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+</script>
+</body>
+</html>

@@ -9,3 +9,7 @@ Pillow
 numpy
 rapidfuzz
 requests
+psycopg2-binary
+minio
+PyJWT
+bcrypt
