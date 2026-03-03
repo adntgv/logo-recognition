@@ -67,19 +67,17 @@ def _pull_data_from_minio():
         return False
 
 
-@app.on_event("startup")
-def startup():
+def _ensure_model_loaded():
+    """Lazy-load model on first request"""
     global model, preprocess, index, metadata, companies_lookup
+    if model is not None:
+        return
     
-    # Try pulling data from MinIO if local files are missing
-    if os.getenv("MINIO_ENDPOINT"):
-        _pull_data_from_minio()
-    
-    print("Loading model...")
+    print("[LAZY-LOAD] Loading model on demand...", flush=True)
     model, _, preprocess = open_clip.create_model_and_transforms("ViT-B-32", pretrained="laion2b_s34b_b79k")
     model.eval()
     
-    print("Loading index...")
+    print("[LAZY-LOAD] Loading index...", flush=True)
     index = faiss.read_index(str(INDEX_DIR / "index.faiss"))
     with open(INDEX_DIR / "metadata.jsonl") as f:
         metadata = [json.loads(l) for l in f]
@@ -87,9 +85,13 @@ def startup():
     companies = json.loads((DATA_DIR / "companies.json").read_text())
     for c in companies:
         companies_lookup[c["company_id"]] = c
-    print(f"Ready: {index.ntotal} vectors, {len(companies_lookup)} companies")
-    
+    print(f"[LAZY-LOAD] Ready: {index.ntotal} vectors, {len(companies_lookup)} companies", flush=True)
+
+@app.on_event("startup")
+async def startup():
+    print("[STARTUP] Starting services (model loading deferred)...", flush=True)
     _init_services()
+    print("[STARTUP] Services initialized. Model will load on first /match request.", flush=True)
 
 @app.get("/")
 async def root():
@@ -98,6 +100,10 @@ async def root():
 @app.get("/admin")
 async def admin_page():
     return FileResponse(str(STATIC_DIR / "admin.html"))
+
+@app.get("/admin/doc")
+async def admin_doc():
+    return FileResponse(str(STATIC_DIR / "admin-doc.html"))
 
 
 # --- Auth helper ---
@@ -370,6 +376,7 @@ def text_score(ocr_tokens, company):
 
 @app.post("/match")
 async def match(file: UploadFile = File(...)):
+    _ensure_model_loaded()  # Lazy-load on first request
     t_start = time.time()
     
     data = await file.read()

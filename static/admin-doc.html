@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Документация - Система распознавания логотипов</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }
+.topbar { background: #1e293b; color: #fff; padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+.topbar h1 { font-size: 1.25rem; }
+.topbar a { color: #60a5fa; text-decoration: none; font-size: 0.9rem; }
+.topbar a:hover { text-decoration: underline; }
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+.sidebar-layout { display: grid; grid-template-columns: 250px 1fr; gap: 2rem; }
+.sidebar { background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 80px; }
+.sidebar h3 { font-size: 1rem; margin-bottom: 1rem; color: #1e293b; }
+.sidebar nav a { display: block; padding: 0.5rem 0.75rem; color: #475569; text-decoration: none; border-radius: 4px; margin-bottom: 0.25rem; font-size: 0.9rem; }
+.sidebar nav a:hover { background: #f1f5f9; color: #1e293b; }
+.sidebar nav a.active { background: #dbeafe; color: #2563eb; font-weight: 500; }
+.content { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.content h2 { color: #1e293b; margin-bottom: 1rem; font-size: 1.75rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem; }
+.content h3 { color: #334155; margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1.25rem; }
+.content h4 { color: #475569; margin-top: 1rem; margin-bottom: 0.5rem; font-size: 1.1rem; }
+.content p, .content ul, .content ol { margin-bottom: 1rem; color: #475569; }
+.content ul, .content ol { padding-left: 1.5rem; }
+.content ul li, .content ol li { margin-bottom: 0.5rem; }
+.content code { background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 0.9rem; color: #be123c; }
+.content pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; overflow-x: auto; margin-bottom: 1rem; }
+.content pre code { background: transparent; color: #e2e8f0; padding: 0; }
+.info-box { background: #eff6ff; border-left: 4px solid #2563eb; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+.info-box.warning { background: #fffbeb; border-left-color: #f59e0b; }
+.info-box.success { background: #f0fdf4; border-left-color: #16a34a; }
+.info-box.danger { background: #fef2f2; border-left-color: #ef4444; }
+.info-box strong { color: #1e293b; }
+.btn-group { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+.btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; color: #fff; font-size: 0.9rem; display: inline-block; }
+.btn-blue { background: #2563eb; }
+.btn-green { background: #16a34a; }
+.btn-amber { background: #d97706; }
+.btn-danger { background: #ef4444; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+table th, table td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+table th { background: #f8fafc; color: #475569; font-weight: 600; }
+table tr:hover { background: #f8fafc; }
+.section { scroll-margin-top: 100px; }
+@media (max-width: 768px) {
+  .sidebar-layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Документация - Система распознавания логотипов</h1>
+  <div>
+    <a href="/admin">Вернуться в админку</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="sidebar-layout">
+    <aside class="sidebar">
+      <h3>Навигация</h3>
+      <nav id="nav">
+        <a href="#overview">Обзор системы</a>
+        <a href="#users">Для пользователей</a>
+        <a href="#moderators">Для модераторов</a>
+        <a href="#labeling">Разметка фото</a>
+        <a href="#stats">Статистика</a>
+        <a href="#sync">Синхронизация компаний</a>
+        <a href="#rebuild">Пересборка индекса</a>
+        <a href="#unverified">Несертифицированные компании</a>
+        <a href="#api">API эндпоинты</a>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section id="overview" class="section">
+        <h2>Обзор системы</h2>
+        
+        <h3>Что это такое?</h3>
+        <p>Система распознавания логотипов HalalDamu — это автоматизированный сервис для идентификации халал-сертифицированных компаний по их логотипам на фотографиях продуктов.</p>
+        
+        <h3>Зачем это нужно?</h3>
+        <p>Потребители могут быстро проверить, является ли продукт халяльным, просто сфотографировав логотип производителя. Система мгновенно определяет компанию и подтверждает её статус сертификации в базе HalalDamu.</p>
+        
+        <h3>Как это работает?</h3>
+        <p>Система использует современные технологии компьютерного зрения и машинного обучения:</p>
+        <ul>
+          <li><strong>Визуальное распознавание:</strong> нейросеть CLIP (ViT-B-32) извлекает визуальные признаки из логотипа</li>
+          <li><strong>Многократная обрезка:</strong> изображение анализируется в нескольких масштабах и позициях для повышения точности</li>
+          <li><strong>Поиск по индексу FAISS:</strong> быстрый поиск похожих логотипов в базе эталонов</li>
+          <li><strong>OCR (распознавание текста):</strong> дополнительная проверка названий компаний на изображении</li>
+          <li><strong>Гибридная оценка:</strong> комбинация визуального сходства (85%) и текстового совпадения (15%)</li>
+        </ul>
+        
+        <div class="info-box">
+          <strong>Технические характеристики:</strong>
+          <ul style="margin-top: 0.5rem; margin-bottom: 0">
+            <li>Модель: OpenCLIP ViT-B-32 (обучена на 2B изображений)</li>
+            <li>Индекс: FAISS (быстрый поиск по векторам)</li>
+            <li>Среднее время распознавания: менее 1 секунды</li>
+            <li>Точность на размеченных данных: отображается в панели статистики</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="users" class="section">
+        <h2>Для пользователей</h2>
+        
+        <h3>Как загрузить фото?</h3>
+        <ol>
+          <li>Откройте главную страницу сервиса</li>
+          <li>Нажмите на область загрузки или перетащите фото логотипа</li>
+          <li>Дождитесь результата (обычно менее 1 секунды)</li>
+        </ol>
+        
+        <h3>Что означают результаты?</h3>
+        <p>Система возвращает список до 10 наиболее похожих компаний с оценками:</p>
+        <ul>
+          <li><strong>Название компании:</strong> официальное название из базы HalalDamu</li>
+          <li><strong>Visual Score:</strong> степень визуального сходства логотипа (0-1)</li>
+          <li><strong>Text Score:</strong> степень совпадения текста на изображении с названием компании (0-1)</li>
+          <li><strong>Final Score:</strong> итоговая оценка (комбинация визуального и текстового скоров)</li>
+        </ul>
+        
+        <h3>Что значит "не найдено"?</h3>
+        <p>Сообщение "unknown" (не найдено) появляется в следующих случаях:</p>
+        <ul>
+          <li>Логотип не похож ни на один эталон в базе (Final Score &lt; 0.3)</li>
+          <li>Компания не сертифицирована HalalDamu</li>
+          <li>Фото низкого качества или логотип частично скрыт</li>
+          <li>На изображении нет логотипа</li>
+        </ul>
+        
+        <div class="info-box warning">
+          <strong>Важно:</strong> отсутствие компании в результатах не означает, что продукт не халяльный. Возможно, компания ещё не добавлена в базу или логотип на фото не распознан корректно.
+        </div>
+      </section>
+
+      <section id="moderators" class="section">
+        <h2>Для модераторов</h2>
+        
+        <h3>Как войти в админку?</h3>
+        <ol>
+          <li>Перейдите по адресу <code>/admin</code></li>
+          <li>Введите логин и пароль:
+            <ul style="margin-top: 0.5rem">
+              <li><strong>Логин:</strong> admin</li>
+              <li><strong>Пароль:</strong> halaldamu2026</li>
+            </ul>
+          </li>
+          <li>Нажмите "Login"</li>
+        </ol>
+        
+        <div class="info-box danger">
+          <strong>Безопасность:</strong> рекомендуется изменить пароль по умолчанию после первого входа. Не передавайте учётные данные третьим лицам.
+        </div>
+        
+        <h3>Интерфейс админки</h3>
+        <p>После входа вы увидите:</p>
+        <ul>
+          <li><strong>Верхняя панель:</strong> общая статистика и кнопки управления</li>
+          <li><strong>Вкладки фильтрации:</strong> All / Unlabeled / Confirmed / Corrected / Unknown / Not HD</li>
+          <li><strong>Сетка фотографий:</strong> все загруженные пользователями изображения</li>
+          <li><strong>Пагинация:</strong> навигация по страницам (20 фото на страницу)</li>
+        </ul>
+      </section>
+
+      <section id="labeling" class="section">
+        <h2>Разметка фото</h2>
+        
+        <p>Разметка позволяет улучшать точность системы, подтверждая правильные предсказания и исправляя ошибки.</p>
+        
+        <h3>Как размечать фото</h3>
+        <p>Для каждой фотографии доступны следующие действия:</p>
+        
+        <h4>1. Подтвердить (Confirmed)</h4>
+        <p>Если верхний результат (с наивысшим score) правильный:</p>
+        <ul>
+          <li>Нажмите на кнопку с названием компании (первая кнопка с синей рамкой)</li>
+          <li>Статус изменится на "confirmed"</li>
+          <li>Эта разметка улучшит точность будущих предсказаний</li>
+        </ul>
+        
+        <h4>2. Исправить (Corrected)</h4>
+        <p>Если правильная компания есть в списке, но не на первом месте:</p>
+        <ul>
+          <li>Нажмите на кнопку с правильным названием компании (2-5 кнопки)</li>
+          <li>Статус изменится на "corrected"</li>
+        </ul>
+        <p>Если правильной компании нет в предложенных вариантах:</p>
+        <ul>
+          <li>Начните вводить название в поле "Search company..."</li>
+          <li>Появится выпадающий список совпадений</li>
+          <li>Выберите нужную компанию из списка</li>
+        </ul>
+        
+        <h4>3. "Нет в базе HalalDamu" (Not HD)</h4>
+        <p>Если компания на логотипе не сертифицирована HalalDamu:</p>
+        <ol>
+          <li>Нажмите красную кнопку "Not HD"</li>
+          <li>В модальном окне введите название компании, которое видите на логотипе</li>
+          <li>Нажмите "Submit"</li>
+        </ol>
+        <p>Система:</p>
+        <ul>
+          <li>Сохранит компанию в список несертифицированных</li>
+          <li>Пометит фото как "not_halaldamu"</li>
+          <li>Будет отслеживать частоту запросов для анализа</li>
+        </ul>
+        
+        <h4>4. "Не знаю" (Unknown)</h4>
+        <p>Если невозможно определить компанию (размытое фото, логотип не виден и т.д.):</p>
+        <ul>
+          <li>Нажмите оранжевую кнопку с вопросительным знаком</li>
+          <li>Фото будет помечено как "unknown"</li>
+          <li>Оно не будет использоваться для обучения</li>
+        </ul>
+        
+        <div class="info-box success">
+          <strong>Совет:</strong> старайтесь размечать как можно больше фотографий. Каждая размеченная фотография улучшает точность системы. Начните с вкладки "Unlabeled", где собраны все неразмеченные изображения.
+        </div>
+      </section>
+
+      <section id="stats" class="section">
+        <h2>Статистика</h2>
+        
+        <p>Верхняя панель отображает ключевые метрики системы в реальном времени:</p>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Метрика</th>
+              <th>Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Total</strong></td>
+              <td>Общее количество загруженных пользователями фотографий</td>
+            </tr>
+            <tr>
+              <td><strong>Unlabeled</strong></td>
+              <td>Количество фото, ожидающих разметки</td>
+            </tr>
+            <tr>
+              <td><strong>Confirmed</strong></td>
+              <td>Фото, где верхнее предсказание было подтверждено модератором</td>
+            </tr>
+            <tr>
+              <td><strong>Corrected</strong></td>
+              <td>Фото, где модератор выбрал другую компанию из списка или через поиск</td>
+            </tr>
+            <tr>
+              <td><strong>Unknown</strong></td>
+              <td>Фото, которые невозможно идентифицировать</td>
+            </tr>
+            <tr>
+              <td><strong>Accuracy</strong></td>
+              <td>Точность системы: Confirmed / (Confirmed + Corrected) × 100%</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <h3>Как читать Accuracy?</h3>
+        <p>Accuracy показывает, как часто система правильно угадывает компанию с первой попытки:</p>
+        <ul>
+          <li><strong>90-100%</strong> — отличная точность, система работает очень хорошо</li>
+          <li><strong>70-89%</strong> — хорошая точность, но есть пространство для улучшения</li>
+          <li><strong>50-69%</strong> — средняя точность, требуется пересборка индекса с учётом новых разметок</li>
+          <li><strong>&lt; 50%</strong> — низкая точность, необходима срочная доработка (больше эталонов, пересборка)</li>
+        </ul>
+        
+        <div class="info-box">
+          <strong>Важно:</strong> accuracy рассчитывается только по размеченным фото (confirmed + corrected). Unknown и not_halaldamu не учитываются, так как для них нет правильного ответа в базе.
+        </div>
+      </section>
+
+      <section id="sync" class="section">
+        <h2>Синхронизация компаний</h2>
+        
+        <h3>Кнопка "Sync Companies"</h3>
+        <p>Эта функция обновляет базу компаний из API HalalDamu.</p>
+        
+        <h3>Что делает синхронизация?</h3>
+        <ol>
+          <li>Загружает актуальный список всех сертифицированных компаний из HalalDamu API</li>
+          <li>Скачивает логотипы новых компаний</li>
+          <li>Генерирует векторные представления (embeddings) для новых логотипов</li>
+          <li>Обновляет FAISS индекс</li>
+          <li>Сохраняет изменения в MinIO (облачное хранилище)</li>
+          <li>Перезагружает индекс в оперативную память сервиса</li>
+        </ol>
+        
+        <h3>Когда использовать?</h3>
+        <ul>
+          <li><strong>Регулярно:</strong> раз в неделю или раз в месяц для получения новых компаний</li>
+          <li><strong>После уведомления:</strong> если HalalDamu добавил новые сертификаты</li>
+          <li><strong>При низкой точности:</strong> если пользователи часто получают "unknown" для известных брендов</li>
+        </ul>
+        
+        <div class="info-box warning">
+          <strong>Внимание:</strong> синхронизация может занять 2-5 минут в зависимости от количества новых компаний. На время синхронизации система остаётся доступной, но старые данные могут отдаваться до завершения процесса.
+        </div>
+        
+        <h3>Результат синхронизации</h3>
+        <p>После завершения появится уведомление с информацией:</p>
+        <ul>
+          <li>Количество компаний в базе (total)</li>
+          <li>Количество новых логотипов (new_logos)</li>
+          <li>Количество векторов в индексе (reloaded_vectors)</li>
+        </ul>
+      </section>
+
+      <section id="rebuild" class="section">
+        <h2>Пересборка индекса</h2>
+        
+        <h3>Кнопка "Rebuild Index"</h3>
+        <p>Пересборка индекса включает размеченные пользовательские фото в обучающую выборку.</p>
+        
+        <h3>Когда нажимать?</h3>
+        <ul>
+          <li><strong>После разметки 50+ фото:</strong> когда накопилось достаточно подтверждённых и исправленных примеров</li>
+          <li><strong>При падении accuracy:</strong> если точность снизилась ниже 80%</li>
+          <li><strong>Раз в неделю/месяц:</strong> как регулярная процедура поддержания качества</li>
+        </ul>
+        
+        <h3>Что происходит?</h3>
+        <ol>
+          <li>Скрипт <code>rebuild_index.py</code> запускается на сервере</li>
+          <li>Загружаются все эталонные логотипы компаний</li>
+          <li>Добавляются размеченные пользовательские фото (confirmed + corrected)</li>
+          <li>Для всех изображений генерируются embeddings</li>
+          <li>Строится новый FAISS индекс</li>
+          <li>Сохраняется в <code>index_artifacts/</code> и MinIO</li>
+          <li>Индекс перезагружается в память</li>
+        </ol>
+        
+        <div class="info-box success">
+          <strong>Результат:</strong> система начинает лучше распознавать логотипы, похожие на те, что уже были размечены. Accuracy обычно растёт на 5-15% после первой пересборки.
+        </div>
+        
+        <div class="info-box warning">
+          <strong>Важно:</strong> пересборка может занять 1-3 минуты. На время пересборки система продолжает работать со старым индексом. Перезагрузка происходит атомарно без downtime.
+        </div>
+      </section>
+
+      <section id="unverified" class="section">
+        <h2>Несертифицированные компании</h2>
+        
+        <h3>Кнопка "Unverified"</h3>
+        <p>Открывает таблицу компаний, которые пользователи пытались найти, но которых нет в базе HalalDamu.</p>
+        
+        <h3>Как просмотреть список?</h3>
+        <ol>
+          <li>Нажмите оранжевую кнопку "Unverified" в верхней панели</li>
+          <li>Появится таблица с топ-50 компаниями</li>
+          <li>Повторное нажатие скрывает таблицу</li>
+        </ol>
+        
+        <h3>Столбцы таблицы</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Столбец</th>
+              <th>Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Name</strong></td>
+              <td>Название компании, введённое модератором</td>
+            </tr>
+            <tr>
+              <td><strong>Requests</strong></td>
+              <td>Сколько раз модераторы помечали фото этой компании</td>
+            </tr>
+            <tr>
+              <td><strong>First Seen</strong></td>
+              <td>Дата первого упоминания</td>
+            </tr>
+            <tr>
+              <td><strong>Last Seen</strong></td>
+              <td>Дата последнего упоминания</td>
+            </tr>
+            <tr>
+              <td><strong>Added By</strong></td>
+              <td>Логин модератора, который впервые добавил компанию</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <h3>Зачем он нужен?</h3>
+        <p>Этот список помогает:</p>
+        <ul>
+          <li><strong>Выявить популярные бренды:</strong> какие компании часто ищут пользователи, но нет в базе</li>
+          <li><strong>Планировать сертификацию:</strong> передать данные команде HalalDamu для приоритизации</li>
+          <li><strong>Анализировать тренды:</strong> понять, какие категории продуктов интересуют пользователей</li>
+          <li><strong>Контроль качества:</strong> проверить, не дублируются ли названия (опечатки, разные написания)</li>
+        </ul>
+        
+        <div class="info-box">
+          <strong>Рекомендация:</strong> еженедельно экспортируйте топ-10 компаний из этого списка и передавайте команде сертификации HalalDamu для рассмотрения.
+        </div>
+      </section>
+
+      <section id="api" class="section">
+        <h2>API эндпоинты</h2>
+        
+        <p>Краткое описание всех эндпоинтов для разработчиков и интеграций.</p>
+        
+        <h3>Публичные эндпоинты</h3>
+        
+        <h4>POST /match</h4>
+        <p>Распознавание логотипа на изображении.</p>
+        <pre><code>curl -X POST -F "file=@logo.jpg" https://logo.adntgv.com/match</code></pre>
+        <p><strong>Ответ:</strong></p>
+        <pre><code>{
+  "label": "Company Name",
+  "candidates": [
+    {
+      "company_id": "123",
+      "company_name": "Company Name",
+      "visual_score": 0.9234,
+      "text_score": 0.6500,
+      "final_score": 0.8824
+    },
+    ...
+  ],
+  "ocr_tokens": ["Company", "Name"],
+  "timing_ms": {
+    "preprocess": 45,
+    "embed": 234,
+    "search": 12,
+    "ocr": 187,
+    "total": 478
+  }
+}</code></pre>
+        
+        <h3>Эндпоинты авторизации</h3>
+        
+        <h4>POST /api/login</h4>
+        <p>Вход в систему для модераторов.</p>
+        <pre><code>curl -X POST -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"halaldamu2026"}' \
+  https://logo.adntgv.com/api/login</code></pre>
+        <p><strong>Ответ:</strong> <code>{"token": "eyJ0..."}</code></p>
+        
+        <h3>Защищённые эндпоинты (требуется токен)</h3>
+        <p>Все следующие запросы требуют заголовок: <code>Authorization: Bearer &lt;token&gt;</code></p>
+        
+        <h4>GET /api/admin/stats</h4>
+        <p>Получить статистику системы.</p>
+        <pre><code>{
+  "total": 1234,
+  "unlabeled": 567,
+  "confirmed": 420,
+  "corrected": 89,
+  "unknown": 123,
+  "not_halaldamu": 35,
+  "accuracy": 82.5
+}</code></pre>
+        
+        <h4>GET /api/admin/uploads</h4>
+        <p>Список загруженных фото с пагинацией.</p>
+        <p><strong>Параметры:</strong></p>
+        <ul>
+          <li><code>status</code> — фильтр по статусу (unlabeled, confirmed, corrected, unknown, not_halaldamu)</li>
+          <li><code>page</code> — номер страницы (по умолчанию 1)</li>
+          <li><code>limit</code> — количество на странице (по умолчанию 20)</li>
+        </ul>
+        
+        <h4>GET /api/admin/uploads/{upload_id}</h4>
+        <p>Детальная информация о конкретном фото.</p>
+        
+        <h4>PATCH /api/admin/uploads/{upload_id}</h4>
+        <p>Разметить фото.</p>
+        <pre><code>curl -X PATCH -H "Authorization: Bearer &lt;token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"label_company_id":"123","label_status":"confirmed"}' \
+  https://logo.adntgv.com/api/admin/uploads/456</code></pre>
+        
+        <h4>GET /api/admin/companies?q={query}</h4>
+        <p>Поиск компаний по названию (для autocomplete).</p>
+        
+        <h4>POST /api/sync</h4>
+        <p>Запустить синхронизацию компаний с HalalDamu API.</p>
+        
+        <h4>POST /api/admin/rebuild-index</h4>
+        <p>Пересобрать FAISS индекс с учётом размеченных фото.</p>
+        
+        <h4>GET /api/admin/unverified</h4>
+        <p>Получить список несертифицированных компаний.</p>
+        
+        <h4>POST /api/admin/unverified</h4>
+        <p>Добавить несертифицированную компанию.</p>
+        <pre><code>curl -X POST -H "Authorization: Bearer &lt;token&gt;" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"New Company"}' \
+  https://logo.adntgv.com/api/admin/unverified</code></pre>
+        
+        <h4>GET /api/uploads/{upload_id}/image</h4>
+        <p>Получить изображение загруженного фото (JPEG).</p>
+        
+        <div class="info-box">
+          <strong>Документация API:</strong> для автоматической интеграции используйте Swagger UI по адресу <code>/docs</code> (если включено) или изучите исходный код <code>app.py</code>.
+        </div>
+      </section>
+
+      <footer style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.85rem; text-align: center;">
+        <p>Система распознавания логотипов HalalDamu</p>
+        <p>Версия 1.0 — Последнее обновление: март 2026</p>
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Active navigation highlighting
+const sections = document.querySelectorAll('.section');
+const navLinks = document.querySelectorAll('.sidebar nav a');
+
+function setActiveLink() {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 120;
+    if (window.pageYOffset >= sectionTop) {
+      current = section.getAttribute('id');
+    }
+  });
+  
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) {
+      link.classList.add('active');
+    }
+  });
+}
+
+window.addEventListener('scroll', setActiveLink);
+window.addEventListener('load', setActiveLink);
+
+// Smooth scrolling
+navLinks.forEach(link => {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    const targetId = this.getAttribute('href');
+    const targetSection = document.querySelector(targetId);
+    if (targetSection) {
+      window.scrollTo({
+        top: targetSection.offsetTop - 80,
+        behavior: 'smooth'
+      });
+    }
+  });
+});
+</script>
+
+</body>
+</html>
