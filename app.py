@@ -359,8 +359,15 @@ def embed_crops(crops):
 def ocr_text(img: Image.Image) -> str:
     try:
         import pytesseract
-        return pytesseract.image_to_string(img, config="--psm 6")
-    except Exception:
+        import os
+        # Set custom tessdata path if available
+        tessdata_path = os.path.expanduser("~/.tessdata")
+        if os.path.exists(tessdata_path):
+            os.environ["TESSDATA_PREFIX"] = tessdata_path
+        # Use multiple languages: Kazakh, Russian, English
+        return pytesseract.image_to_string(img, lang="kaz+rus+eng", config="--psm 6")
+    except Exception as e:
+        print(f"OCR error: {e}")
         return ""
 
 def text_score(ocr_tokens, company):
@@ -373,6 +380,31 @@ def text_score(ocr_tokens, company):
             score = fuzz.partial_ratio(token.lower(), name.lower()) / 100.0
             best = max(best, score)
     return best
+
+@app.post("/ocr")
+async def ocr_endpoint(file: UploadFile = File(...)):
+    """Extract text from an image using Tesseract OCR"""
+    try:
+        data = await file.read()
+        img = Image.open(io.BytesIO(data)).convert("RGB")
+        
+        # Extract text
+        text = ocr_text(img)
+        tokens = [t for t in text.split() if len(t) >= 2]
+        
+        return {
+            "success": True,
+            "text": text.strip(),
+            "tokens": tokens,
+            "token_count": len(tokens)
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "text": "",
+            "tokens": []
+        }
 
 @app.post("/match")
 async def match(file: UploadFile = File(...)):
